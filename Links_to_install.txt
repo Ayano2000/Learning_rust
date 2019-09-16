@@ -1,3 +1,5 @@
 https://blog.cyplo.net/posts/2017/11/rust-vscode-mac/
 
 https://rust-lang.github.io/rustup-components-history/
+
+Working off of this link : https://doc.rust-lang.org/1.30.0/book/first-edition/guessing-game.html
