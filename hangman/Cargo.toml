@@ -3,3 +3,8 @@ name = "guessing_game"
 version = "0.1.0"
 authors = ["Arata Yano <aratayano00@gmail.com>"]
 edition = "2018"
+
+[dependencies]
+
+rand="0.3.0"
+ansi_term = "0.7"
