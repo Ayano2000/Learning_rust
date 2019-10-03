@@ -36,7 +36,7 @@ fn main()
     let mut gd : GameData = GameData {
                         secret_line        : random_line,
                         discovered_letters : String::new(),
-                        lives              : 10,
+                        lives              : 5,
                         status             : String::new()
                         };
 
