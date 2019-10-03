@@ -13,6 +13,8 @@ use ansi_term::Colour::Red;
 use ansi_term::Colour::Green;
 use ansi_term::Colour::Yellow;
 
+// Keeps track of the discovered letters the word the lives remaining
+// games status
 struct GameData {
     discovered_letters      : String,
     secret_line             : String,
@@ -20,50 +22,84 @@ struct GameData {
     status                  : String,
 }
 
-fn  main() {
-    let     to_guess = get_line().expect("Failed to find line!");
+// Used to keep track of the users input letters.
+enum UserInputStatus {
+    AlreadyDiscovered,
+    LetterGuessed,
+    LetterMissed,
+}
+
+fn main()
+{
+    let random_line = get_line().expect("Failed to read input data!");
 
     let mut gd : GameData = GameData {
-        secret_line         : to_guess,
-        discovered_letters  : String::new(),
-        lives               : 5,
-        status              : String::new(),
-    };
+                        secret_line        : random_line,
+                        discovered_letters : String::new(),
+                        lives              : 10,
+                        status             : String::new()
+                        };
 
     let mut secret_line_masked = format_hidden_string(&gd.secret_line, &gd.discovered_letters);
-    // will have no discovered letters in this call.
-    // will create the secret_line_masked string.
-    loop {
-        // refresh_screen(&gd, &secret_line_masked);
-        println!("Well give it a go");
+    // we use this string to check the guesses against the letters present in the string.
+    loop
+    {
+        refresh_screen(&gd, &secret_line_masked);
+        println!("Type your guess:");
         let user_guess = read_guess();
-
-        if validate_user_guess(user_guess) {
+        // user guess will be re-assigned to be what the latest one is.
+        if validate_user_guess(user_guess)
+        {
             let guess_lower = user_guess.unwrap().to_lowercase().next().unwrap();
-            match check_user_guess(&gd, guess_lower) {
-                UserInputStatus::LetterGuessed => {
+            // guess lower is the users guess checked and converted to lowercase.
+            match check_user_guess(&gd, guess_lower)
+            {
+                //this checks the users input and then executes based on whether
+                // the letter is in the string, not in the sting or previousely guessed.
+                UserInputStatus::LetterGuessed =>
+                {
                     gd.discovered_letters.push(guess_lower);
-                    let status = format!("You discovered: {}", guess_lower);
-                    gd.status = Green.paint(status.to_string());
+                    let status = format!("You discovered {}", guess_lower);
+                    gd.status = Green.paint(status).to_string();
                     secret_line_masked = format_hidden_string(&gd.secret_line, &gd.discovered_letters);
-                    if !secret_line_masked.contains('_') {
+
+                    if !secret_line_masked.contains('_')
+                    {
                         gd.status = Green.bold().paint("You won!").to_string();
                         refresh_screen(&gd, &secret_line_masked);
-                        break ;
+                        break;
                     }
-                    else {
-                        let status = format!("Unlucky mate {}", guess_lower);
+                }
+
+                UserInputStatus::LetterMissed =>
+                {
+                    gd.discovered_letters.push(guess_lower);
+                    gd.lives = gd.lives - 1;
+
+                    if gd.lives == 0
+                    {
+                        gd.status = Red.bold().paint("You lost!").to_string();
+                        secret_line_masked = format_hidden_string(&gd.secret_line, &gd.secret_line);
+                        refresh_screen(&gd, &secret_line_masked);
+                        break;
+                    }
+                    else
+                    {
+                        let status = format!("Unfortunately, no {}", guess_lower);
                         gd.status = Red.paint(status).to_string();
                     }
                 }
-                UserInputStatus::AlreadyDiscovered => {
-                    let status = format!("{} has already been discovered!", guess_lower);
+
+                UserInputStatus::AlreadyDiscovered =>
+                {
+                    let status = format!("{} is already discovered!", guess_lower);
                     gd.status = Yellow.paint(status).to_string();
                 }
             }
         }
-        else {
-            let status = format!("It's not a letter!");
+        else
+        {
+            let status = format!("It is not a letter!");
             gd.status = Yellow.paint(status).to_string();
         }
     }
@@ -99,19 +135,17 @@ fn  refresh_screen(gd: &GameData, secret_line: &String) {
     println!("{}[2J", 27 as char);
     println!("Can you guess the word?");
     println!("Lives Remaining: {}. Letters Discovered: {}", gd.lives, gd.discovered_letters);
-    // print_hangman(&gd);
+    print_hangman(&gd);
     // might not print a hangman, just want to digest the code.
     println!("{}", secret_line);
     println!("{}", gd.status);
 }
 
-fn  read_guess() -> Option<char> {
+fn read_guess() -> Option<char>
+{
     let mut guess = String::new();
-    io::stdin.read_line(&mut guess)
-        .expect("Failed to read line");
+    io::stdin().read_line(&mut guess).expect("Failed to read line");
     guess.trim().chars().nth(0)
-    // reads the guess from the stdin.
-    // removes any bad chars before returning the users input.
 }
 
 fn  validate_user_guess(user_guess: Option<char>) -> bool {
@@ -134,4 +168,77 @@ fn  check_user_guess(gd: &GameData, user_guess: char) -> UserInputStatus {
         return UserInputStatus::LetterMissed;
     }
     UserInputStatus::LetterGuessed
+}
+
+fn print_hangman(gd: &GameData)
+{
+    match gd.lives
+    {
+        0 =>
+        {
+            println!(" _________   ");
+            println!("|         |  ");
+            println!("|         XO ");
+            println!("|        /|\\ ");
+            println!("|        / \\ ");
+            println!("|            ");
+            println!("|            ");
+        }
+
+        1 =>
+        {
+            println!(" _________   ");
+            println!("|         |  ");
+            println!("|         O  ");
+            println!("|        /|\\ ");
+            println!("|        / \\ ");
+            println!("|        ||| ");
+            println!("|        ||| ");
+        }
+
+        2 =>
+        {
+            println!(" _________   ");
+            println!("|            ");
+            println!("|         O  ");
+            println!("|        /|\\ ");
+            println!("|        / \\ ");
+            println!("|        ||| ");
+            println!("|        ||| ");
+        }
+
+        3 =>
+        {
+            println!(" _________   ");
+            println!("|            ");
+            println!("|            ");
+            println!("|         O  ");
+            println!("|        /|\\ ");
+            println!("|        / \\ ");
+            println!("|        ||| ");
+
+        }
+
+        4 =>
+        {
+            println!(" _________   ");
+            println!("|            ");
+            println!("|            ");
+            println!("|            ");
+            println!("|         O  ");
+            println!("|        /|\\ ");
+            println!("|        / \\ ");
+        }
+
+        _ =>
+        {
+            println!("             ");
+            println!("             ");
+            println!("             ");
+            println!("             ");
+            println!("          O  ");
+            println!("         /|\\ ");
+            println!("         / \\ ");
+        }
+    }
 }
